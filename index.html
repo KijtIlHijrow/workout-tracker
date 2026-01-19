@@ -389,11 +389,19 @@ input:focus {
     </div>
 
     <div style="margin-top: 24px;">
-      <h3 style="font-size: 18px; margin-bottom: 12px;">Add Exercise</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="font-size: 18px; margin: 0;">Add Exercise</h3>
+        <a href="#" onclick="showModal('equipment-modal'); renderEquipmentList(); return false;" style="color: var(--primary); font-size: 14px; text-decoration: none;">
+          Manage Equipment
+        </a>
+      </div>
       <input type="text" id="new-exercise-name" placeholder="Exercise name" />
       <select id="new-exercise-type" style="display: block; width: 100%; padding: 16px; font-size: 16px; border: 2px solid var(--gray-200); border-radius: 12px; margin-bottom: 12px;">
         <!-- Populated by JS -->
       </select>
+      <div id="equipment-chips" style="margin-bottom: 12px;">
+        <!-- Populated by JS -->
+      </div>
       <button class="btn btn-primary" onclick="addExercise()">Add Exercise</button>
     </div>
 
@@ -816,6 +824,47 @@ input:focus {
       }
     }
 
+    function renderEquipmentChips() {
+      const chipsEl = document.getElementById('equipment-chips');
+
+      if (state.equipment.length === 0) {
+        chipsEl.innerHTML = '';
+        return;
+      }
+
+      chipsEl.innerHTML = `
+        <label style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--gray-700);">
+          Equipment (optional)
+        </label>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          ${state.equipment.map(eq => `
+            <div
+              onclick="toggleEquipmentChip('${eq.id}')"
+              data-equipment-id="${eq.id}"
+              class="equipment-chip"
+              style="padding: 8px 12px; background: var(--gray-100); color: var(--gray-700); border-radius: 16px; font-size: 14px; cursor: pointer; user-select: none;"
+            >
+              ${eq.name}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function toggleEquipmentChip(equipmentId) {
+      const chip = document.querySelector(`[data-equipment-id="${equipmentId}"]`);
+
+      if (chip.classList.contains('selected')) {
+        chip.classList.remove('selected');
+        chip.style.background = 'var(--gray-100)';
+        chip.style.color = 'var(--gray-700)';
+      } else {
+        chip.classList.add('selected');
+        chip.style.background = 'var(--primary)';
+        chip.style.color = 'white';
+      }
+    }
+
     function renderExerciseManager() {
       // Get unique workout types from schedule
       const workoutTypes = [...new Set(state.schedule.map(s => s.workout_type))];
@@ -866,6 +915,8 @@ input:focus {
           `).join('')}
         </div>
       `).join('');
+
+      renderEquipmentChips();
     }
 
     async function addExercise() {
