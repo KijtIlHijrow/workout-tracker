@@ -557,7 +557,7 @@ input:focus {
         });
 
         if (error) {
-          messageEl.innerHTML = `<span style="color: var(--danger);">${error.message} <a href="#" onclick="document.getElementById('auth-password').value=''; handleAuth(); return false;" style="color: var(--primary);">Send magic link instead?</a></span>`;
+          messageEl.innerHTML = `<span style="color: var(--danger);">${escapeHtml(error.message)} <a href="#" onclick="document.getElementById('auth-password').value=''; handleAuth(); return false;" style="color: var(--primary);">Send magic link instead?</a></span>`;
         }
       } else {
         // Magic link
@@ -571,7 +571,7 @@ input:focus {
         });
 
         if (error) {
-          messageEl.innerHTML = `<span style="color: var(--danger);">${error.message}</span>`;
+          messageEl.innerHTML = `<span style="color: var(--danger);">${escapeHtml(error.message)}</span>`;
         } else {
           messageEl.innerHTML = '<span style="color: var(--success);">Check your email for the magic link!</span>';
         }
@@ -1133,7 +1133,7 @@ input:focus {
 
       listEl.innerHTML = state.equipment.map(eq => `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--gray-50); border-radius: 8px; margin-bottom: 8px;">
-          <span>${eq.name}</span>
+          <span>${escapeHtml(eq.name)}</span>
           <button
             onclick="deleteEquipment('${eq.id}')"
             style="background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 14px; cursor: pointer;"
