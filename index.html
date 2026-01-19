@@ -730,6 +730,26 @@ input:focus {
       }
     }
 
+    async function loadMaxWeights() {
+      // Get sets with 6+ reps, ordered by weight descending
+      const { data } = await supabase
+        .from('sets')
+        .select('exercise_id, weight, reps')
+        .eq('user_id', state.user.id)
+        .gte('reps', 6)
+        .order('weight', { ascending: false });
+
+      if (data) {
+        state.maxWeights = {};
+        // Take the first (highest weight) occurrence per exercise
+        data.forEach(set => {
+          if (!state.maxWeights[set.exercise_id]) {
+            state.maxWeights[set.exercise_id] = { weight: set.weight, reps: set.reps };
+          }
+        });
+      }
+    }
+
     function showMainScreen() {
       showScreen('main-screen');
       renderMainScreen();
