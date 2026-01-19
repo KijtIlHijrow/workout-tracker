@@ -744,7 +744,7 @@ input:focus {
       listEl.innerHTML = todayExercises.map(ex => {
         const last = state.lastStats[ex.id];
         return `
-          <div class="exercise-item" onclick="openLogModal('${ex.id}', '${ex.name}')">
+          <div class="exercise-item exercise-item-clickable" data-exercise-id="${ex.id}">
             <div class="exercise-name">${escapeHtml(ex.name)}</div>
             ${last ? `<div class="exercise-last">Last: ${last.weight}kg × ${last.reps}</div>` : ''}
           </div>
@@ -906,7 +906,8 @@ input:focus {
               <span>${escapeHtml(ex.name)}</span>
               <div style="display: flex; gap: 8px;">
                 <button
-                  onclick="editExercise('${ex.id}', '${ex.name.replace(/'/g, "\\'")}')"
+                  class="edit-exercise-btn"
+                  data-exercise-id="${ex.id}"
                   style="background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; cursor: pointer;"
                 >
                   Edit
@@ -1282,6 +1283,30 @@ input:focus {
       } else if (e.key === 'Escape' && e.target.value) {
         e.preventDefault();
         e.target.value = '';
+      }
+    });
+
+    // Event delegation for exercise items (workout view)
+    document.addEventListener('click', (e) => {
+      const exerciseItem = e.target.closest('.exercise-item-clickable');
+      if (exerciseItem) {
+        const exerciseId = exerciseItem.dataset.exerciseId;
+        const exercise = state.exercises.find(ex => ex.id === exerciseId);
+        if (exercise) {
+          openLogModal(exerciseId, exercise.name);
+        }
+      }
+    });
+
+    // Event delegation for edit exercise buttons
+    document.addEventListener('click', (e) => {
+      const editBtn = e.target.closest('.edit-exercise-btn');
+      if (editBtn) {
+        const exerciseId = editBtn.dataset.exerciseId;
+        const exercise = state.exercises.find(ex => ex.id === exerciseId);
+        if (exercise) {
+          editExercise(exerciseId, exercise.name);
+        }
       }
     });
   </script>
