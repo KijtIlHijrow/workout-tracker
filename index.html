@@ -716,7 +716,7 @@ input:focus {
 
       if (todaySchedule) {
         headerEl.innerHTML = `
-          <div class="badge">${todaySchedule.workout_type.toUpperCase()} - ${dayNames[today]}</div>
+          <div class="badge">${escapeHtml(todaySchedule.workout_type.toUpperCase())} - ${dayNames[today]}</div>
         `;
       } else {
         headerEl.innerHTML = `
@@ -745,7 +745,7 @@ input:focus {
         const last = state.lastStats[ex.id];
         return `
           <div class="exercise-item" onclick="openLogModal('${ex.id}', '${ex.name}')">
-            <div class="exercise-name">${ex.name}</div>
+            <div class="exercise-name">${escapeHtml(ex.name)}</div>
             ${last ? `<div class="exercise-last">Last: ${last.weight}kg × ${last.reps}</div>` : ''}
           </div>
         `;
@@ -879,7 +879,7 @@ input:focus {
       // Populate workout type select
       const selectEl = document.getElementById('new-exercise-type');
       selectEl.innerHTML = workoutTypes.map(type =>
-        `<option value="${type}">${type}</option>`
+        `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`
       ).join('');
 
       // Group exercises by workout type
@@ -899,11 +899,11 @@ input:focus {
       groupsEl.innerHTML = Object.entries(grouped).map(([type, exercises]) => `
         <div style="margin-bottom: 24px;">
           <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--gray-700);">
-            ${type}
+            ${escapeHtml(type)}
           </h3>
           ${exercises.map(ex => `
             <div class="exercise-item" style="display: flex; justify-content: space-between; align-items: center;">
-              <span>${ex.name}</span>
+              <span>${escapeHtml(ex.name)}</span>
               <div style="display: flex; gap: 8px;">
                 <button
                   onclick="editExercise('${ex.id}', '${ex.name.replace(/'/g, "\\'")}')"
@@ -1025,7 +1025,7 @@ input:focus {
         return `
           <div class="schedule-day" data-day="${dayNum}">
             <label>${dayName}</label>
-            <input type="text" placeholder="Rest day" value="${existing ? existing.workout_type : ''}" />
+            <input type="text" placeholder="Rest day" value="${existing ? escapeHtml(existing.workout_type) : ''}" />
           </div>
         `;
       }).join('');
