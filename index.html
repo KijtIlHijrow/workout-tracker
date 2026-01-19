@@ -904,6 +904,18 @@ input:focus {
       }
     }
 
+    function getEquipmentNames(equipmentIds) {
+      if (!equipmentIds || equipmentIds.length === 0) return '';
+
+      return equipmentIds
+        .map(id => {
+          const eq = state.equipment.find(e => e.id === id);
+          return eq ? eq.name : null;
+        })
+        .filter(Boolean)
+        .join(' • ');
+    }
+
     function renderExerciseManager() {
       // Get unique workout types from schedule
       const workoutTypes = [...new Set(state.schedule.map(s => s.workout_type))];
@@ -933,9 +945,14 @@ input:focus {
           <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--gray-700);">
             ${escapeHtml(type)}
           </h3>
-          ${exercises.map(ex => `
+          ${exercises.map(ex => {
+            const equipmentText = getEquipmentNames(ex.equipment_ids);
+            return `
             <div class="exercise-item" style="display: flex; justify-content: space-between; align-items: center;">
-              <span>${escapeHtml(ex.name)}</span>
+              <div style="flex: 1;">
+                <span style="display: block; font-weight: 600;">${escapeHtml(ex.name)}</span>
+                ${equipmentText ? `<span style="display: block; font-size: 12px; color: var(--gray-700); margin-top: 4px;">${escapeHtml(equipmentText)}</span>` : ''}
+              </div>
               <div style="display: flex; gap: 8px;">
                 <button
                   class="edit-exercise-btn"
@@ -953,7 +970,7 @@ input:focus {
                 </button>
               </div>
             </div>
-          `).join('')}
+          `;}).join('')}
         </div>
       `).join('');
 
