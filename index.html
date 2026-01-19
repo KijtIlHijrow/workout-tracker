@@ -259,9 +259,20 @@ input:focus {
       autocomplete="email"
     />
 
+    <input
+      type="password"
+      id="auth-password"
+      placeholder="Password (optional)"
+      autocomplete="current-password"
+    />
+
     <button class="btn btn-primary" onclick="handleAuth()">
-      Send Magic Link
+      Sign In
     </button>
+
+    <p style="font-size: 14px; color: var(--gray-700); text-align: center; margin-top: 8px;">
+      Leave password empty for magic link
+    </p>
 
     <div id="auth-message" style="margin-top: 16px; text-align: center;"></div>
   </div>
@@ -343,7 +354,17 @@ input:focus {
       Save Schedule
     </button>
 
-    <button class="btn btn-secondary" onclick="handleSignOut()" style="margin-top: 12px;">
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-200);">
+      <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 12px;">Password Login</h3>
+      <div id="password-fields">
+        <!-- Populated by JS -->
+      </div>
+      <button class="btn btn-primary" onclick="updatePassword()" style="margin-top: 12px;">
+        Save Password
+      </button>
+    </div>
+
+    <button class="btn btn-secondary" onclick="handleSignOut()" style="margin-top: 24px;">
       Sign Out
     </button>
 
@@ -485,6 +506,7 @@ input:focus {
 
     async function handleAuth() {
       const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
       const messageEl = document.getElementById('auth-message');
 
       if (!email) {
@@ -492,19 +514,34 @@ input:focus {
         return;
       }
 
-      messageEl.innerHTML = '<span style="color: var(--gray-700);">Sending magic link...</span>';
+      if (password) {
+        // Password login
+        messageEl.innerHTML = '<span style="color: var(--gray-700);">Signing in...</span>';
 
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: window.location.href
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) {
+          messageEl.innerHTML = `<span style="color: var(--danger);">${error.message} <a href="#" onclick="document.getElementById('auth-password').value=''; handleAuth(); return false;" style="color: var(--primary);">Send magic link instead?</a></span>`;
         }
-      });
-
-      if (error) {
-        messageEl.innerHTML = `<span style="color: var(--danger);">${error.message}</span>`;
       } else {
-        messageEl.innerHTML = '<span style="color: var(--success);">Check your email for the magic link!</span>';
+        // Magic link
+        messageEl.innerHTML = '<span style="color: var(--gray-700);">Sending magic link...</span>';
+
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: {
+            emailRedirectTo: window.location.href
+          }
+        });
+
+        if (error) {
+          messageEl.innerHTML = `<span style="color: var(--danger);">${error.message}</span>`;
+        } else {
+          messageEl.innerHTML = '<span style="color: var(--success);">Check your email for the magic link!</span>';
+        }
       }
     }
 
@@ -880,6 +917,13 @@ input:focus {
           </div>
         `;
       }).join('');
+
+      // Render password fields
+      const passwordFieldsEl = document.getElementById('password-fields');
+      passwordFieldsEl.innerHTML = `
+        <input type="password" id="new-password" placeholder="New password (min 8 chars)" style="margin-bottom: 12px;" />
+        <input type="password" id="confirm-password" placeholder="Confirm password" />
+      `;
     }
 
     async function updateSchedule() {
@@ -921,6 +965,39 @@ input:focus {
       state.schedule = scheduleData;
       alert('Schedule updated!');
       showMainScreen();
+    }
+
+    async function updatePassword() {
+      const newPassword = document.getElementById('new-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+
+      if (!newPassword) {
+        alert('Please enter a password');
+        return;
+      }
+
+      if (newPassword.length < 8) {
+        alert('Password must be at least 8 characters');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        alert('Passwords do not match');
+        return;
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        alert('Error setting password: ' + error.message);
+        return;
+      }
+
+      alert('Password saved! You can now use it to sign in.');
+      document.getElementById('new-password').value = '';
+      document.getElementById('confirm-password').value = '';
     }
 
     async function handleSignOut() {
@@ -996,6 +1073,17 @@ input:focus {
       if (e.key === 'Enter') {
         e.preventDefault();
         document.getElementById('set-reps').focus();
+      }
+    });
+
+    // Enter key submits exercise, Esc clears text
+    document.getElementById('new-exercise-name').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addExercise();
+      } else if (e.key === 'Escape' && e.target.value) {
+        e.preventDefault();
+        e.target.value = '';
       }
     });
   </script>
