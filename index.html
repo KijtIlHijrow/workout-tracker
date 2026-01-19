@@ -461,6 +461,7 @@ input:focus {
       user: null,
       exercises: [],
       schedule: [],
+      equipment: [],
       syncQueue: [],
       lastStats: {}
     };
@@ -557,6 +558,7 @@ input:focus {
       } else {
         state.schedule = schedule;
         await loadExercises();
+        await loadEquipment();
         await loadLastStats();
         loadSyncQueue();
         showMainScreen();
@@ -617,6 +619,26 @@ input:focus {
       if (!error && data) {
         state.exercises = data;
         localStorage.setItem('exercises', JSON.stringify(data));
+      }
+    }
+
+    async function loadEquipment() {
+      // Try localStorage first
+      const cached = localStorage.getItem('equipment');
+      if (cached) {
+        state.equipment = JSON.parse(cached);
+      }
+
+      // Fetch fresh from Supabase
+      const { data, error } = await supabase
+        .from('equipment')
+        .select('*')
+        .eq('user_id', state.user.id)
+        .order('name');
+
+      if (!error && data) {
+        state.equipment = data;
+        localStorage.setItem('equipment', JSON.stringify(data));
       }
     }
 
