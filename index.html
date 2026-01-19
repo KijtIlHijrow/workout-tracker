@@ -948,25 +948,66 @@ input:focus {
           ${exercises.map(ex => {
             const equipmentText = getEquipmentNames(ex.equipment_ids);
             return `
-            <div class="exercise-item" style="display: flex; justify-content: space-between; align-items: center;">
-              <div style="flex: 1;">
+            <div class="exercise-item" style="display: flex; justify-content: space-between; align-items: start; gap: 12px;">
+              <div style="flex: 1; min-width: 0;" class="exercise-display" data-exercise-id="${ex.id}">
                 <span style="display: block; font-weight: 600;">${escapeHtml(ex.name)}</span>
                 ${equipmentText ? `<span style="display: block; font-size: 12px; color: var(--gray-700); margin-top: 4px;">${escapeHtml(equipmentText)}</span>` : ''}
               </div>
-              <div style="display: flex; gap: 8px;">
+              <div style="flex: 1; min-width: 0; display: none;" class="exercise-edit" data-exercise-id="${ex.id}">
+                <input
+                  type="text"
+                  class="edit-exercise-input"
+                  value="${escapeHtml(ex.name)}"
+                  style="padding: 12px; margin-bottom: 0; font-size: 15px; border-radius: 8px;"
+                />
+                ${state.equipment.length > 0 ? `
+                  <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;">
+                    ${state.equipment.map(eq => {
+                      const isSelected = ex.equipment_ids.includes(eq.id);
+                      return `
+                        <div
+                          data-equipment-id="${eq.id}"
+                          class="equipment-chip-edit ${isSelected ? 'selected' : ''}"
+                          style="padding: 6px 10px; background: ${isSelected ? 'var(--primary)' : 'var(--gray-100)'}; color: ${isSelected ? 'white' : 'var(--gray-700)'}; border-radius: 12px; font-size: 12px; cursor: pointer; user-select: none; transition: all 0.15s;"
+                        >
+                          ${escapeHtml(eq.name)}
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                ` : ''}
+              </div>
+              <div style="display: flex; gap: 8px; flex-shrink: 0;" class="exercise-actions" data-exercise-id="${ex.id}">
                 <button
                   class="edit-exercise-btn"
                   data-exercise-id="${ex.id}"
-                  style="background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; cursor: pointer;"
+                  style="background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;"
                 >
                   Edit
                 </button>
                 <button
                   class="delete-exercise-btn"
                   data-exercise-id="${ex.id}"
-                  style="background: var(--danger); color: white; border: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; cursor: pointer;"
+                  style="background: var(--danger); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;"
                 >
                   Delete
+                </button>
+              </div>
+              <div style="display: none; gap: 8px; flex-shrink: 0; margin-top: 2px;" class="exercise-edit-actions" data-exercise-id="${ex.id}">
+                <button
+                  class="save-exercise-btn"
+                  data-exercise-id="${ex.id}"
+                  data-current-name="${escapeHtml(ex.name)}"
+                  style="background: var(--success); color: white; border: none; padding: 12px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;"
+                >
+                  Save
+                </button>
+                <button
+                  class="cancel-edit-btn"
+                  data-exercise-id="${ex.id}"
+                  style="background: var(--gray-700); color: white; border: none; padding: 12px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;"
+                >
+                  Cancel
                 </button>
               </div>
             </div>
@@ -1046,35 +1087,96 @@ input:focus {
       renderExerciseManager();
     }
 
-    async function editExercise(exerciseId, currentName) {
-      const newName = prompt('Edit exercise name:', currentName);
+    function startEditExercise(exerciseId) {
+      document.querySelector(`.exercise-display[data-exercise-id="${exerciseId}"]`).style.display = 'none';
+      document.querySelector(`.exercise-edit[data-exercise-id="${exerciseId}"]`).style.display = 'block';
+      document.querySelector(`.exercise-actions[data-exercise-id="${exerciseId}"]`).style.display = 'none';
+      document.querySelector(`.exercise-edit-actions[data-exercise-id="${exerciseId}"]`).style.display = 'flex';
 
-      if (!newName || newName.trim() === '') {
+      const input = document.querySelector(`.exercise-edit[data-exercise-id="${exerciseId}"] .edit-exercise-input`);
+      input.focus();
+      input.select();
+    }
+
+    function cancelEditExercise(exerciseId) {
+      document.querySelector(`.exercise-display[data-exercise-id="${exerciseId}"]`).style.display = 'block';
+      document.querySelector(`.exercise-edit[data-exercise-id="${exerciseId}"]`).style.display = 'none';
+      document.querySelector(`.exercise-actions[data-exercise-id="${exerciseId}"]`).style.display = 'flex';
+      document.querySelector(`.exercise-edit-actions[data-exercise-id="${exerciseId}"]`).style.display = 'none';
+    }
+
+    async function saveEditExercise(exerciseId, currentName) {
+      const editDiv = document.querySelector(`.exercise-edit[data-exercise-id="${exerciseId}"]`);
+      const input = editDiv.querySelector('.edit-exercise-input');
+      const newName = input.value.trim();
+
+      if (!newName) {
+        alert('Exercise name cannot be empty');
         return;
       }
 
-      if (newName.trim() === currentName) {
-        return; // No change
+      // Get selected equipment
+      const selectedChips = editDiv.querySelectorAll('.equipment-chip-edit.selected');
+      const newEquipmentIds = Array.from(selectedChips).map(chip => chip.dataset.equipmentId);
+
+      const exercise = state.exercises.find(ex => ex.id === exerciseId);
+      const oldEquipmentIds = exercise ? exercise.equipment_ids : [];
+
+      const nameChanged = newName !== currentName;
+      const equipmentChanged = JSON.stringify(newEquipmentIds.sort()) !== JSON.stringify(oldEquipmentIds.sort());
+
+      if (!nameChanged && !equipmentChanged) {
+        cancelEditExercise(exerciseId);
+        return;
       }
 
-      const { error } = await supabase
-        .from('exercises')
-        .update({ name: newName.trim() })
-        .eq('id', exerciseId);
+      // Update name if changed
+      if (nameChanged) {
+        const { error } = await supabase
+          .from('exercises')
+          .update({ name: newName })
+          .eq('id', exerciseId);
 
-      if (error) {
-        if (error.code === '23505') {
-          alert('An exercise with this name already exists');
-        } else {
-          alert('Error updating exercise: ' + error.message);
+        if (error) {
+          if (error.code === '23505') {
+            alert('An exercise with this name already exists');
+          } else {
+            alert('Error updating exercise: ' + error.message);
+          }
+          return;
         }
-        return;
+      }
+
+      // Update equipment if changed
+      if (equipmentChanged) {
+        // Delete old links
+        await supabase
+          .from('exercise_equipment')
+          .delete()
+          .eq('exercise_id', exerciseId);
+
+        // Insert new links
+        if (newEquipmentIds.length > 0) {
+          const links = newEquipmentIds.map(eqId => ({
+            exercise_id: exerciseId,
+            equipment_id: eqId
+          }));
+
+          const { error } = await supabase
+            .from('exercise_equipment')
+            .insert(links);
+
+          if (error) {
+            alert('Error updating equipment: ' + error.message);
+            return;
+          }
+        }
       }
 
       // Update local state
-      const exercise = state.exercises.find(ex => ex.id === exerciseId);
       if (exercise) {
-        exercise.name = newName.trim();
+        exercise.name = newName;
+        exercise.equipment_ids = newEquipmentIds;
         localStorage.setItem('exercises', JSON.stringify(state.exercises));
       }
 
@@ -1384,6 +1486,27 @@ input:focus {
       }
     });
 
+    // Keyboard shortcuts for exercise editing
+    document.addEventListener('keydown', (e) => {
+      if (e.target.classList.contains('edit-exercise-input')) {
+        const editDiv = e.target.closest('.exercise-edit');
+        if (!editDiv) return;
+
+        const exerciseId = editDiv.dataset.exerciseId;
+
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const saveBtn = document.querySelector(`.save-exercise-btn[data-exercise-id="${exerciseId}"]`);
+          if (saveBtn) {
+            saveEditExercise(exerciseId, saveBtn.dataset.currentName);
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          cancelEditExercise(exerciseId);
+        }
+      }
+    });
+
     // Event delegation for all dynamic elements
     document.addEventListener('click', (e) => {
       // Exercise item (workout view)
@@ -1397,21 +1520,46 @@ input:focus {
         return;
       }
 
-      // Equipment chip toggle
+      // Equipment chip toggle (add exercise)
       const equipChip = e.target.closest('.equipment-chip');
       if (equipChip) {
         toggleEquipmentChip(equipChip.dataset.equipmentId);
         return;
       }
 
+      // Equipment chip toggle (edit exercise)
+      const equipChipEdit = e.target.closest('.equipment-chip-edit');
+      if (equipChipEdit) {
+        if (equipChipEdit.classList.contains('selected')) {
+          equipChipEdit.classList.remove('selected');
+          equipChipEdit.style.background = 'var(--gray-100)';
+          equipChipEdit.style.color = 'var(--gray-700)';
+        } else {
+          equipChipEdit.classList.add('selected');
+          equipChipEdit.style.background = 'var(--primary)';
+          equipChipEdit.style.color = 'white';
+        }
+        return;
+      }
+
       // Edit exercise button
       const editBtn = e.target.closest('.edit-exercise-btn');
       if (editBtn) {
-        const exerciseId = editBtn.dataset.exerciseId;
-        const exercise = state.exercises.find(ex => ex.id === exerciseId);
-        if (exercise) {
-          editExercise(exerciseId, exercise.name);
-        }
+        startEditExercise(editBtn.dataset.exerciseId);
+        return;
+      }
+
+      // Save exercise button
+      const saveBtn = e.target.closest('.save-exercise-btn');
+      if (saveBtn) {
+        saveEditExercise(saveBtn.dataset.exerciseId, saveBtn.dataset.currentName);
+        return;
+      }
+
+      // Cancel edit button
+      const cancelBtn = e.target.closest('.cancel-edit-btn');
+      if (cancelBtn) {
+        cancelEditExercise(cancelBtn.dataset.exerciseId);
         return;
       }
 
