@@ -626,7 +626,13 @@ input:focus {
       // Try localStorage first
       const cached = localStorage.getItem('equipment');
       if (cached) {
-        state.equipment = JSON.parse(cached);
+        try {
+          state.equipment = JSON.parse(cached);
+        } catch (e) {
+          console.error('Error parsing cached equipment:', e);
+          localStorage.removeItem('equipment');
+          state.equipment = [];
+        }
       }
 
       // Fetch fresh from Supabase
@@ -639,6 +645,8 @@ input:focus {
       if (!error && data) {
         state.equipment = data;
         localStorage.setItem('equipment', JSON.stringify(data));
+      } else if (error) {
+        console.error('Error loading equipment:', error);
       }
     }
 
