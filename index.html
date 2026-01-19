@@ -1065,6 +1065,92 @@ input:focus {
       showScreen('auth-screen');
     }
 
+    function renderEquipmentList() {
+      const listEl = document.getElementById('equipment-list');
+
+      if (state.equipment.length === 0) {
+        listEl.innerHTML = '<p style="color: var(--gray-700); font-size: 14px;">No equipment yet. Add your first one above!</p>';
+        return;
+      }
+
+      listEl.innerHTML = state.equipment.map(eq => `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--gray-50); border-radius: 8px; margin-bottom: 8px;">
+          <span>${eq.name}</span>
+          <button
+            onclick="deleteEquipment('${eq.id}')"
+            style="background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 14px; cursor: pointer;"
+          >
+            Delete
+          </button>
+        </div>
+      `).join('');
+    }
+
+    async function addEquipment() {
+      const name = document.getElementById('new-equipment-name').value.trim();
+
+      if (!name) {
+        alert('Please enter equipment name');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('equipment')
+        .insert({
+          user_id: state.user.id,
+          name
+        })
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === '23505') {
+          alert('Equipment already exists');
+        } else {
+          alert('Error adding equipment: ' + error.message);
+        }
+        return;
+      }
+
+      state.equipment.push(data);
+      state.equipment.sort((a, b) => a.name.localeCompare(b.name));
+      localStorage.setItem('equipment', JSON.stringify(state.equipment));
+      document.getElementById('new-equipment-name').value = '';
+      renderEquipmentList();
+    }
+
+    async function deleteEquipment(equipmentId) {
+      // Check usage count
+      const { data: usageData } = await supabase
+        .from('exercise_equipment')
+        .select('exercise_id')
+        .eq('equipment_id', equipmentId);
+
+      const usageCount = usageData ? usageData.length : 0;
+
+      const confirmMsg = usageCount > 0
+        ? `Remove this equipment? Used by ${usageCount} exercise${usageCount > 1 ? 's' : ''}.`
+        : 'Remove this equipment?';
+
+      if (!confirm(confirmMsg)) {
+        return;
+      }
+
+      const { error } = await supabase
+        .from('equipment')
+        .delete()
+        .eq('id', equipmentId);
+
+      if (error) {
+        alert('Error deleting equipment: ' + error.message);
+        return;
+      }
+
+      state.equipment = state.equipment.filter(eq => eq.id !== equipmentId);
+      localStorage.setItem('equipment', JSON.stringify(state.equipment));
+      renderEquipmentList();
+    }
+
     // Load sync queue from localStorage
     function loadSyncQueue() {
       const queue = localStorage.getItem('syncQueue');
