@@ -9,4 +9,7 @@
 ### Conventions
 - Use metric units (kg for weight)
 - Optimize for mobile (iPhone) usage
-- Priority: quick loading and convenience
+- **Priority: Extremely fast loading and minimal code**
+  - Keep codebase as small as possible
+  - Minimize lines of code
+  - Optimize for speed above all else
