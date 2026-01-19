@@ -972,7 +972,10 @@ input:focus {
           .insert(equipmentLinks);
 
         if (linkError) {
-          console.error('Error linking equipment:', linkError);
+          // Rollback: delete the exercise we just created
+          await supabase.from('exercises').delete().eq('id', exercise.id);
+          alert('Error linking equipment: ' + linkError.message);
+          return;
         }
       }
 
