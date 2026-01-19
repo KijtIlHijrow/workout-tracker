@@ -1372,6 +1372,17 @@ input:focus {
       }
     });
 
+    // Enter key submits equipment, Esc clears
+    document.getElementById('new-equipment-name').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addEquipment();
+      } else if (e.key === 'Escape' && e.target.value) {
+        e.preventDefault();
+        e.target.value = '';
+      }
+    });
+
     // Event delegation for all dynamic elements
     document.addEventListener('click', (e) => {
       // Exercise item (workout view)
