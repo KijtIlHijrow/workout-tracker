@@ -824,6 +824,12 @@ input:focus {
       }
     }
 
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
     function renderEquipmentChips() {
       const chipsEl = document.getElementById('equipment-chips');
 
@@ -844,7 +850,7 @@ input:focus {
               class="equipment-chip"
               style="padding: 8px 12px; background: var(--gray-100); color: var(--gray-700); border-radius: 16px; font-size: 14px; cursor: pointer; user-select: none;"
             >
-              ${eq.name}
+              ${escapeHtml(eq.name)}
             </div>
           `).join('')}
         </div>
@@ -853,6 +859,7 @@ input:focus {
 
     function toggleEquipmentChip(equipmentId) {
       const chip = document.querySelector(`[data-equipment-id="${equipmentId}"]`);
+      if (!chip) return; // Guard against missing elements
 
       if (chip.classList.contains('selected')) {
         chip.classList.remove('selected');
