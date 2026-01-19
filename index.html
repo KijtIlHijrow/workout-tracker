@@ -642,15 +642,37 @@ input:focus {
       }
 
       // Fetch fresh from Supabase
-      const { data, error } = await supabase
+      const { data: exercises, error } = await supabase
         .from('exercises')
         .select('*')
         .eq('user_id', state.user.id)
         .order('name');
 
-      if (!error && data) {
-        state.exercises = data;
-        localStorage.setItem('exercises', JSON.stringify(data));
+      if (!error && exercises) {
+        // Fetch equipment links for all exercises
+        const { data: links } = await supabase
+          .from('exercise_equipment')
+          .select('exercise_id, equipment_id')
+          .in('exercise_id', exercises.map(ex => ex.id));
+
+        // Group equipment IDs by exercise ID
+        const equipmentByExercise = {};
+        if (links) {
+          links.forEach(link => {
+            if (!equipmentByExercise[link.exercise_id]) {
+              equipmentByExercise[link.exercise_id] = [];
+            }
+            equipmentByExercise[link.exercise_id].push(link.equipment_id);
+          });
+        }
+
+        // Add equipment_ids to each exercise
+        exercises.forEach(ex => {
+          ex.equipment_ids = equipmentByExercise[ex.id] || [];
+        });
+
+        state.exercises = exercises;
+        localStorage.setItem('exercises', JSON.stringify(exercises));
       }
     }
 
