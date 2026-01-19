@@ -793,10 +793,17 @@ input:focus {
 
       listEl.innerHTML = todayExercises.map(ex => {
         const last = state.lastStats[ex.id];
+        const max = state.maxWeights[ex.id];
         return `
           <div class="exercise-item exercise-item-clickable" data-exercise-id="${ex.id}">
             <div class="exercise-name">${escapeHtml(ex.name)}</div>
-            ${last ? `<div class="exercise-last">Last: ${last.weight}kg × ${last.reps}</div>` : ''}
+            ${last || max ? `
+              <div class="exercise-last">
+                ${last ? `Last: ${last.weight}kg × ${last.reps}` : ''}
+                ${last && max ? ` | ` : ''}
+                ${max ? `Max: ${max.weight}kg (${max.reps})` : ''}
+              </div>
+            ` : ''}
           </div>
         `;
       }).join('');
