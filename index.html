@@ -936,7 +936,12 @@ input:focus {
         return;
       }
 
-      const { data, error } = await supabase
+      // Get selected equipment IDs
+      const selectedChips = document.querySelectorAll('.equipment-chip.selected');
+      const equipmentIds = Array.from(selectedChips).map(chip => chip.dataset.equipmentId);
+
+      // Create exercise
+      const { data: exercise, error: exerciseError } = await supabase
         .from('exercises')
         .insert({
           user_id: state.user.id,
@@ -946,18 +951,45 @@ input:focus {
         .select()
         .single();
 
-      if (error) {
-        if (error.code === '23505') { // Unique constraint violation
+      if (exerciseError) {
+        if (exerciseError.code === '23505') {
           alert('Exercise already exists');
         } else {
-          alert('Error adding exercise: ' + error.message);
+          alert('Error adding exercise: ' + exerciseError.message);
         }
         return;
       }
 
-      state.exercises.push(data);
+      // Link equipment
+      if (equipmentIds.length > 0) {
+        const equipmentLinks = equipmentIds.map(eqId => ({
+          exercise_id: exercise.id,
+          equipment_id: eqId
+        }));
+
+        const { error: linkError } = await supabase
+          .from('exercise_equipment')
+          .insert(equipmentLinks);
+
+        if (linkError) {
+          console.error('Error linking equipment:', linkError);
+        }
+      }
+
+      // Add equipment_ids to exercise for local display
+      exercise.equipment_ids = equipmentIds;
+
+      state.exercises.push(exercise);
       localStorage.setItem('exercises', JSON.stringify(state.exercises));
       document.getElementById('new-exercise-name').value = '';
+
+      // Deselect all chips
+      document.querySelectorAll('.equipment-chip.selected').forEach(chip => {
+        chip.classList.remove('selected');
+        chip.style.background = 'var(--gray-100)';
+        chip.style.color = 'var(--gray-700)';
+      });
+
       renderExerciseManager();
     }
 
