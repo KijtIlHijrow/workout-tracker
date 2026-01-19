@@ -845,6 +845,15 @@ input:focus {
 
       // Optimistic update
       state.lastStats[currentExerciseId] = { weight, reps };
+
+      // Update max weight if this set qualifies (6+ reps and beats current max)
+      if (reps >= 6) {
+        const currentMax = state.maxWeights[currentExerciseId]?.weight || 0;
+        if (weight > currentMax) {
+          state.maxWeights[currentExerciseId] = { weight, reps };
+        }
+      }
+
       updateSyncStatus('pending');
 
       hideModal('log-set-modal');
