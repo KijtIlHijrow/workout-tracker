@@ -414,6 +414,30 @@ input:focus {
     <!-- Workout history -->
   </div>
 
+  <div id="equipment-modal" class="modal hidden" onclick="if(event.target === this) hideModal('equipment-modal')">
+    <div class="modal-content">
+      <div class="modal-header">Manage Equipment</div>
+
+      <input
+        type="text"
+        id="new-equipment-name"
+        placeholder="Equipment name (e.g., Barbell)"
+        style="margin-bottom: 16px;"
+      />
+      <button class="btn btn-primary" onclick="addEquipment()" style="margin-bottom: 24px;">
+        Add Equipment
+      </button>
+
+      <div id="equipment-list" style="max-height: 300px; overflow-y: auto;">
+        <!-- Populated by JS -->
+      </div>
+
+      <button class="btn btn-secondary" onclick="hideModal('equipment-modal')" style="margin-top: 16px;">
+        Close
+      </button>
+    </div>
+  </div>
+
   <!-- Modals -->
   <div id="log-set-modal" class="modal hidden" onclick="if(event.target === this) hideModal('log-set-modal')">
     <div class="modal-content">
