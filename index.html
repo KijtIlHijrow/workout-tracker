@@ -680,6 +680,7 @@ input:focus {
         await loadEquipment();
         await loadLastStats();
         await loadMaxWeights();
+        await loadRecentSets();
         loadSyncQueue();
         showMainScreen();
       }
@@ -840,6 +841,33 @@ input:focus {
             state.maxWeights[set.exercise_id] = { weight: set.weight, reps: set.reps };
           }
         });
+      }
+    }
+
+    async function loadRecentSets() {
+      // Get last 6 sets per exercise for comparison (current + previous session)
+      const { data } = await supabase
+        .from('sets')
+        .select('exercise_id, weight, reps, logged_at')
+        .eq('user_id', state.user.id)
+        .order('logged_at', { ascending: false });
+
+      if (data) {
+        const recentSets = {};
+        data.forEach(set => {
+          if (!recentSets[set.exercise_id]) {
+            recentSets[set.exercise_id] = [];
+          }
+          // Only store up to 6 sets per exercise
+          if (recentSets[set.exercise_id].length < 6) {
+            recentSets[set.exercise_id].push({
+              weight: set.weight,
+              reps: set.reps,
+              logged_at: set.logged_at
+            });
+          }
+        });
+        state.recentSets = recentSets;
       }
     }
 
