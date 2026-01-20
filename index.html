@@ -1098,14 +1098,8 @@ input:focus {
           continue;
         }
 
+        // Skip exercises with no data - don't render empty sections
         if (!sets || sets.length === 0) {
-          stats[exerciseId] = {
-            pr: null,
-            lastSession: [],
-            volume30d: 0,
-            chartData: [],
-            history: []
-          };
           continue;
         }
 
@@ -1185,14 +1179,8 @@ input:focus {
         return;
       }
 
+      // Skip exercises with no data - don't render empty sections
       if (!sets || sets.length === 0) {
-        state.exerciseStats[exerciseId] = {
-          pr: null,
-          lastSession: [],
-          volume30d: 0,
-          chartData: [],
-          history: []
-        };
         return;
       }
 
