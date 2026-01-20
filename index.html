@@ -950,6 +950,15 @@ input:focus {
     }
 
     function renderExerciseManager() {
+      // Save currently expanded groups
+      const expandedGroups = new Set();
+      document.querySelectorAll('.exercise-group-content').forEach(content => {
+        if (content.style.display === 'block') {
+          const workoutType = content.closest('[data-workout-type]').dataset.workoutType;
+          expandedGroups.add(workoutType);
+        }
+      });
+
       // Get unique workout types from schedule
       const workoutTypes = [...new Set(state.schedule.map(s => s.workout_type))];
 
@@ -973,13 +982,15 @@ input:focus {
         grouped[ex.workout_type].push(ex);
       });
 
-      groupsEl.innerHTML = Object.entries(grouped).map(([type, exercises]) => `
+      groupsEl.innerHTML = Object.entries(grouped).map(([type, exercises]) => {
+        const isExpanded = expandedGroups.has(type);
+        return `
         <div style="margin-bottom: 24px;" data-workout-type="${escapeHtml(type)}">
           <h3 class="workout-type-header" style="font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--gray-700); cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px;">
-            <span style="transition: transform 0.2s; display: inline-block;" class="collapse-arrow">▶</span>
+            <span style="transition: transform 0.2s; display: inline-block; transform: rotate(${isExpanded ? '90deg' : '0deg'});" class="collapse-arrow">▶</span>
             ${escapeHtml(type)}
           </h3>
-          <div class="exercise-group-content" style="display: none;">
+          <div class="exercise-group-content" style="display: ${isExpanded ? 'block' : 'none'};">`;
           ${exercises.map(ex => {
             const equipmentText = getEquipmentNames(ex.equipment_ids);
             return `
@@ -1049,7 +1060,7 @@ input:focus {
           `;}).join('')}
           </div>
         </div>
-      `).join('');
+      `;}).join('');
 
       renderEquipmentChips();
     }
