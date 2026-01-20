@@ -1131,11 +1131,7 @@ input:focus {
         .single();
 
       if (exerciseError) {
-        if (exerciseError.code === '23505') {
-          alert('Exercise already exists');
-        } else {
-          alert('Error adding exercise: ' + exerciseError.message);
-        }
+        alert('Error adding exercise: ' + exerciseError.message);
         return;
       }
 
@@ -1226,11 +1222,7 @@ input:focus {
           .eq('id', exerciseId);
 
         if (error) {
-          if (error.code === '23505') {
-            alert('An exercise with this name already exists');
-          } else {
-            alert('Error updating exercise: ' + error.message);
-          }
+          alert('Error updating exercise: ' + error.message);
           return;
         }
       }
