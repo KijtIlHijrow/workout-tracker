@@ -282,6 +282,41 @@ input:focus {
   padding: 40px 20px;
   color: var(--gray-700);
 }
+
+/* Set chips for inline preview */
+.set-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.set-chip {
+  display: inline-block;
+  padding: 4px 10px;
+  background: var(--gray-100);
+  color: var(--gray-700);
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.set-chip .trend-arrow {
+  margin-left: 4px;
+  font-size: 11px;
+}
+
+.trend-arrow.up {
+  color: var(--success);
+}
+
+.trend-arrow.down {
+  color: var(--danger);
+}
+
+.trend-arrow.neutral {
+  color: var(--gray-700);
+}
   </style>
 </head>
 <body>
