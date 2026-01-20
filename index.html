@@ -457,27 +457,10 @@ input:focus {
   </div>
 
   <div id="stats-screen" class="screen hidden">
-    <h2>Manage Exercises</h2>
+    <h2>Stats</h2>
 
-    <div id="exercise-groups">
-      <!-- Populated by JS -->
-    </div>
-
-    <div style="margin-top: 24px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <h3 style="font-size: 18px; margin: 0;">Add Exercise</h3>
-        <a href="#" onclick="showModal('equipment-modal'); renderEquipmentList(); return false;" style="color: var(--primary); font-size: 14px; text-decoration: none;">
-          Manage Equipment
-        </a>
-      </div>
-      <input type="text" id="new-exercise-name" placeholder="Exercise name" />
-      <select id="new-exercise-type" style="display: block; width: 100%; padding: 16px; font-size: 16px; border: 2px solid var(--gray-200); border-radius: 12px; margin-bottom: 12px;">
-        <!-- Populated by JS -->
-      </select>
-      <div id="equipment-chips" style="margin-bottom: 12px;">
-        <!-- Populated by JS -->
-      </div>
-      <button class="btn btn-primary" onclick="addExercise()">Add Exercise</button>
+    <div id="stats-content">
+      <!-- Populated by renderStatsScreen() -->
     </div>
 
     <div class="nav-bar">
@@ -1012,6 +995,21 @@ input:focus {
     function showMainScreen() {
       showScreen('main-screen');
       renderMainScreen();
+    }
+
+    async function showStatsTab() {
+      showScreen('stats-screen');
+
+      // Lazy load stats data on first visit
+      if (!state.statsLoaded) {
+        // Show loading indicator
+        document.getElementById('stats-content').innerHTML = '<div class="loading">Loading stats...</div>';
+
+        await loadDashboardMetrics();
+        state.statsLoaded = true;
+      }
+
+      renderStatsScreen();
     }
 
     function calculateTrend(currentSet, previousSet) {
