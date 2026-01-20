@@ -912,6 +912,101 @@ input:focus {
       }
     }
 
+    async function loadDashboardMetrics() {
+      const metrics = { prs: 0, trending: 0, streak: 0 };
+
+      // Metric 1: New PRs this week
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+
+      const { data: recentSets } = await supabase
+        .from('sets')
+        .select('exercise_id, weight, reps, logged_at')
+        .eq('user_id', state.user.id)
+        .gte('logged_at', weekAgo.toISOString())
+        .gte('reps', 6)
+        .order('weight', { ascending: false });
+
+      if (recentSets) {
+        const prExercises = new Set();
+        recentSets.forEach(set => {
+          const currentMax = state.maxWeights[set.exercise_id];
+          if (!currentMax || set.weight > currentMax.weight) {
+            prExercises.add(set.exercise_id);
+          }
+        });
+        metrics.prs = prExercises.size;
+      }
+
+      // Metric 2: Exercises trending up (last 7 days avg > previous 7 days avg)
+      const twoWeeksAgo = new Date();
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+      const { data: twoWeeksSets } = await supabase
+        .from('sets')
+        .select('exercise_id, weight, logged_at')
+        .eq('user_id', state.user.id)
+        .gte('logged_at', twoWeeksAgo.toISOString())
+        .order('logged_at', { ascending: false });
+
+      if (twoWeeksSets) {
+        const exerciseTrends = {};
+        twoWeeksSets.forEach(set => {
+          const daysAgo = Math.floor((Date.now() - new Date(set.logged_at).getTime()) / (1000 * 60 * 60 * 24));
+
+          if (!exerciseTrends[set.exercise_id]) {
+            exerciseTrends[set.exercise_id] = { recent: [], previous: [] };
+          }
+
+          if (daysAgo < 7) {
+            exerciseTrends[set.exercise_id].recent.push(set.weight);
+          } else {
+            exerciseTrends[set.exercise_id].previous.push(set.weight);
+          }
+        });
+
+        let trendingCount = 0;
+        Object.values(exerciseTrends).forEach(trend => {
+          if (trend.recent.length >= 2 && trend.previous.length >= 2) {
+            const recentAvg = trend.recent.reduce((a, b) => a + b, 0) / trend.recent.length;
+            const previousAvg = trend.previous.reduce((a, b) => a + b, 0) / trend.previous.length;
+            if (recentAvg > previousAvg) {
+              trendingCount++;
+            }
+          }
+        });
+        metrics.trending = trendingCount;
+      }
+
+      // Metric 3: Current streak (consecutive workout days)
+      const { data: allSets } = await supabase
+        .from('sets')
+        .select('logged_at')
+        .eq('user_id', state.user.id)
+        .order('logged_at', { ascending: false });
+
+      if (allSets && allSets.length > 0) {
+        const uniqueDays = [...new Set(allSets.map(s => s.logged_at.split('T')[0]))];
+        let streak = 0;
+        let currentDate = new Date();
+
+        for (let i = 0; i < uniqueDays.length; i++) {
+          const logDate = new Date(uniqueDays[i]);
+          const diffDays = Math.floor((currentDate - logDate) / (1000 * 60 * 60 * 24));
+
+          if (diffDays === streak) {
+            streak++;
+            currentDate = logDate;
+          } else {
+            break;
+          }
+        }
+        metrics.streak = streak;
+      }
+
+      state.dashboardMetrics = metrics;
+    }
+
     function showMainScreen() {
       showScreen('main-screen');
       renderMainScreen();
