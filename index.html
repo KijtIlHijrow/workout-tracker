@@ -1083,6 +1083,105 @@ input:focus {
       state.exerciseStats = stats;
     }
 
+    async function loadExerciseStatsForOne(exerciseId) {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      // Get all sets for this exercise (last 30 days for history)
+      const { data: sets, error } = await supabase
+        .from('sets')
+        .select('weight, reps, logged_at')
+        .eq('user_id', state.user.id)
+        .eq('exercise_id', exerciseId)
+        .gte('logged_at', thirtyDaysAgo.toISOString())
+        .order('logged_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading exercise stats:', error);
+        return;
+      }
+
+      if (!sets || sets.length === 0) {
+        state.exerciseStats[exerciseId] = {
+          pr: null,
+          lastSession: [],
+          volume30d: 0,
+          chartData: [],
+          history: []
+        };
+        return;
+      }
+
+      // PR (all-time max from state.maxWeights)
+      const pr = state.maxWeights[exerciseId] || null;
+
+      // Last session (group by date, take most recent date)
+      const sessionsByDate = {};
+      sets.forEach(set => {
+        const date = set.logged_at.split('T')[0];
+        if (!sessionsByDate[date]) sessionsByDate[date] = [];
+        sessionsByDate[date].push({ weight: set.weight, reps: set.reps });
+      });
+
+      const dates = Object.keys(sessionsByDate).sort().reverse();
+      const lastSession = dates.length > 0 ? sessionsByDate[dates[0]] : [];
+
+      // Total volume (30 days)
+      const volume30d = sets.reduce((sum, set) => sum + (set.weight * set.reps), 0);
+
+      // Chart data (last 10 sessions + weekly aggregation for older)
+      const chartData = [];
+      if (dates.length > 0) {
+        const recentDates = dates.slice(0, 10);
+        recentDates.reverse().forEach(date => {
+          const sessionSets = sessionsByDate[date];
+          const maxWeight = Math.max(...sessionSets.map(s => s.weight));
+          chartData.push({ date, weight: maxWeight, type: 'session' });
+        });
+
+        // Weekly aggregation for older sessions (if more than 10)
+        if (dates.length > 10) {
+          const olderDates = dates.slice(10);
+          const weeklyData = {};
+
+          olderDates.forEach(date => {
+            const weekStart = getWeekStart(new Date(date));
+            if (!weeklyData[weekStart]) weeklyData[weekStart] = [];
+            const sessionSets = sessionsByDate[date];
+            weeklyData[weekStart].push(...sessionSets.map(s => s.weight));
+          });
+
+          Object.entries(weeklyData).forEach(([week, weights]) => {
+            const avgWeight = weights.reduce((a, b) => a + b, 0) / weights.length;
+            chartData.unshift({ date: week, weight: avgWeight, type: 'weekly' });
+          });
+        }
+      }
+
+      // History (grouped by session date)
+      const history = dates.map(date => ({
+        date,
+        sets: sessionsByDate[date]
+      }));
+
+      state.exerciseStats[exerciseId] = { pr, lastSession, volume30d, chartData, history };
+    }
+
+    async function refreshStatsForExercise(exerciseId) {
+      // Refresh recentSets for this exercise (last 6 sets for inline preview)
+      const { data: sets, error } = await supabase
+        .from('sets')
+        .select('weight, reps, logged_at')
+        .eq('user_id', state.user.id)
+        .eq('exercise_id', exerciseId)
+        .order('logged_at', { ascending: false })
+        .limit(6);
+
+      if (sets && !error) {
+        state.recentSets[exerciseId] = sets;
+      }
+    }
+
     function getWeekStart(date) {
       const d = new Date(date);
       const day = d.getDay();
@@ -1475,7 +1574,7 @@ input:focus {
         logged_at: new Date().toISOString()
       };
 
-      // Optimistic update
+      // Optimistic update for lastStats
       state.lastStats[currentExerciseId] = { weight, reps };
 
       // Update max weight if this set qualifies (6+ reps and beats current max)
@@ -1485,6 +1584,13 @@ input:focus {
           state.maxWeights[currentExerciseId] = { weight, reps };
         }
       }
+
+      // Optimistic update for recentSets (inline preview)
+      if (!state.recentSets[currentExerciseId]) {
+        state.recentSets[currentExerciseId] = [];
+      }
+      state.recentSets[currentExerciseId].unshift({ weight, reps, logged_at: setData.logged_at });
+      state.recentSets[currentExerciseId] = state.recentSets[currentExerciseId].slice(0, 6);
 
       updateSyncStatus('pending');
 
@@ -1503,6 +1609,20 @@ input:focus {
         localStorage.setItem('syncQueue', JSON.stringify(state.syncQueue));
       } else {
         updateSyncStatus('synced');
+
+        // Refresh stats after successful save
+        await refreshStatsForExercise(currentExerciseId);
+        renderMainScreen(); // Update inline preview with fresh data
+
+        // If Stats tab loaded, refresh it too
+        if (state.statsLoaded) {
+          await loadDashboardMetrics();
+          await loadExerciseStatsForOne(currentExerciseId);
+          const currentScreen = document.querySelector('.screen:not(.hidden)')?.id;
+          if (currentScreen === 'stats-screen') {
+            renderStatsScreen();
+          }
+        }
       }
     }
 
