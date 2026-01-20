@@ -974,10 +974,12 @@ input:focus {
       });
 
       groupsEl.innerHTML = Object.entries(grouped).map(([type, exercises]) => `
-        <div style="margin-bottom: 24px;">
-          <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--gray-700);">
+        <div style="margin-bottom: 24px;" data-workout-type="${escapeHtml(type)}">
+          <h3 class="workout-type-header" style="font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--gray-700); cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px;">
+            <span style="transition: transform 0.2s; display: inline-block;" class="collapse-arrow">▶</span>
             ${escapeHtml(type)}
           </h3>
+          <div class="exercise-group-content" style="display: none;">
           ${exercises.map(ex => {
             const equipmentText = getEquipmentNames(ex.equipment_ids);
             return `
@@ -1045,6 +1047,7 @@ input:focus {
               </div>
             </div>
           `;}).join('')}
+          </div>
         </div>
       `).join('');
 
@@ -1542,6 +1545,22 @@ input:focus {
 
     // Event delegation for all dynamic elements
     document.addEventListener('click', (e) => {
+      // Workout type header collapse toggle
+      const workoutHeader = e.target.closest('.workout-type-header');
+      if (workoutHeader) {
+        const container = workoutHeader.parentElement;
+        const content = container.querySelector('.exercise-group-content');
+        const arrow = workoutHeader.querySelector('.collapse-arrow');
+        if (content.style.display === 'none') {
+          content.style.display = 'block';
+          arrow.style.transform = 'rotate(90deg)';
+        } else {
+          content.style.display = 'none';
+          arrow.style.transform = 'rotate(0deg)';
+        }
+        return;
+      }
+
       // Exercise item (workout view)
       const exerciseItem = e.target.closest('.exercise-item-clickable');
       if (exerciseItem) {
