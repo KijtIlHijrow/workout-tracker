@@ -337,6 +337,15 @@ input:focus {
     width: 100%;
   }
 
+  /* Add separator between stacked stats */
+  .stats-summary > div:not(:last-child)::after {
+    content: '';
+    display: block;
+    height: 1px;
+    background: var(--gray-200);
+    margin: 8px 0;
+  }
+
   /* Chart container: enable horizontal scroll */
   .chart-container {
     overflow-x: auto;
