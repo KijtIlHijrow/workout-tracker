@@ -409,8 +409,8 @@ input:focus {
       <button class="nav-item active" onclick="showMainScreen()">
         Workout
       </button>
-      <button class="nav-item" onclick="showScreen('exercises-screen'); renderExerciseManager();">
-        Exercises
+      <button class="nav-item" onclick="showStatsTab()">
+        Stats
       </button>
       <button class="nav-item" onclick="showScreen('settings-screen'); renderSettings();">
         Settings
@@ -447,8 +447,8 @@ input:focus {
       <button class="nav-item" onclick="showMainScreen()">
         Workout
       </button>
-      <button class="nav-item" onclick="showScreen('exercises-screen'); renderExerciseManager();">
-        Exercises
+      <button class="nav-item" onclick="showStatsTab()">
+        Stats
       </button>
       <button class="nav-item active">
         Settings
@@ -456,7 +456,7 @@ input:focus {
     </div>
   </div>
 
-  <div id="exercises-screen" class="screen hidden">
+  <div id="stats-screen" class="screen hidden">
     <h2>Manage Exercises</h2>
 
     <div id="exercise-groups">
@@ -485,7 +485,7 @@ input:focus {
         Workout
       </button>
       <button class="nav-item active">
-        Exercises
+        Stats
       </button>
       <button class="nav-item" onclick="showScreen('settings-screen'); renderSettings();">
         Settings
