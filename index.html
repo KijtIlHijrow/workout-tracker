@@ -175,6 +175,51 @@ input:focus {
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 20px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.badge:active {
+  opacity: 0.8;
+}
+
+.day-dropdown {
+  position: absolute;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  margin-top: 4px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.day-option {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--gray-100);
+  transition: background 0.2s;
+}
+
+.day-option:last-child {
+  border-bottom: none;
+}
+
+.day-option:active {
+  background: var(--gray-50);
+}
+
+.day-option.selected {
+  background: var(--primary);
+  color: white;
+}
+
+.day-option .day-indicator {
+  color: var(--primary);
+  margin-right: 4px;
+}
+
+.day-option.selected .day-indicator {
+  color: white;
 }
 
 /* Sync status */
@@ -502,7 +547,8 @@ input:focus {
       syncQueue: [],
       lastStats: {},
       maxWeights: {},
-      isInitialized: false
+      isInitialized: false,
+      selectedDay: new Date().getDay()
     };
 
     // Initialize app
@@ -798,26 +844,33 @@ input:focus {
     }
 
     function renderMainScreen() {
-      const today = new Date().getDay(); // 0 = Sunday
-      const todaySchedule = state.schedule.find(s => s.day_of_week === today);
+      const today = new Date().getDay();
+      const selectedDay = state.selectedDay;
+      const selectedSchedule = state.schedule.find(s => s.day_of_week === selectedDay);
 
       // Render header
       const headerEl = document.getElementById('today-header');
       const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-      if (todaySchedule) {
+      if (selectedSchedule) {
         headerEl.innerHTML = `
-          <div class="badge">${escapeHtml(todaySchedule.workout_type.toUpperCase())} - ${dayNames[today]}</div>
+          <div style="position: relative;">
+            <div class="badge" onclick="toggleDayDropdown()">${escapeHtml(selectedSchedule.workout_type.toUpperCase())} - ${dayNames[selectedDay]} ▼</div>
+            <div id="day-dropdown" class="day-dropdown hidden"></div>
+          </div>
         `;
       } else {
         headerEl.innerHTML = `
-          <div class="badge" style="background: var(--gray-700);">REST DAY - ${dayNames[today]}</div>
+          <div style="position: relative;">
+            <div class="badge" style="background: var(--gray-700);" onclick="toggleDayDropdown()">REST DAY - ${dayNames[selectedDay]} ▼</div>
+            <div id="day-dropdown" class="day-dropdown hidden"></div>
+          </div>
         `;
       }
 
-      // Filter exercises for today
-      const todayExercises = todaySchedule
-        ? state.exercises.filter(ex => ex.workout_type === todaySchedule.workout_type)
+      // Filter exercises for selected day
+      const todayExercises = selectedSchedule
+        ? state.exercises.filter(ex => ex.workout_type === selectedSchedule.workout_type)
         : [];
 
       // Render exercise list
@@ -826,7 +879,7 @@ input:focus {
       if (todayExercises.length === 0) {
         listEl.innerHTML = `
           <p style="text-align: center; color: var(--gray-700); margin-top: 40px;">
-            ${todaySchedule ? 'No exercises yet. Add some in the Exercises tab.' : 'Enjoy your rest day!'}
+            ${selectedSchedule ? 'No exercises yet. Add some in the Exercises tab.' : 'Enjoy your rest day!'}
           </p>
         `;
         return;
@@ -850,6 +903,57 @@ input:focus {
           </div>
         `;
       }).join('');
+    }
+
+    function toggleDayDropdown() {
+      const dropdown = document.getElementById('day-dropdown');
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const today = new Date().getDay();
+
+      if (!dropdown.classList.contains('hidden')) {
+        dropdown.classList.add('hidden');
+        return;
+      }
+
+      dropdown.innerHTML = dayNames.map((day, index) => {
+        const schedule = state.schedule.find(s => s.day_of_week === index);
+        const isToday = index === today;
+        const isSelected = index === state.selectedDay;
+        const workoutType = schedule ? schedule.workout_type.toUpperCase() : 'Rest Day';
+
+        return `
+          <div class="day-option ${isSelected ? 'selected' : ''}" onclick="selectDay(${index})">
+            ${isToday ? '<span class="day-indicator">•</span>' : ''}${day} - ${workoutType}
+          </div>
+        `;
+      }).join('');
+
+      dropdown.classList.remove('hidden');
+
+      // Close dropdown when clicking outside or pressing ESC
+      setTimeout(() => {
+        document.addEventListener('click', closeDropdown, { once: true });
+        document.addEventListener('keydown', handleEscape, { once: true });
+      }, 0);
+    }
+
+    function selectDay(day) {
+      state.selectedDay = day;
+      renderMainScreen();
+    }
+
+    function closeDropdown(e) {
+      const dropdown = document.getElementById('day-dropdown');
+      if (dropdown && !dropdown.contains(e.target)) {
+        dropdown.classList.add('hidden');
+      }
+    }
+
+    function handleEscape(e) {
+      if (e.key === 'Escape') {
+        const dropdown = document.getElementById('day-dropdown');
+        if (dropdown) dropdown.classList.add('hidden');
+      }
     }
 
     let currentExerciseId = null;
