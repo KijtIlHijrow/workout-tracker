@@ -548,7 +548,12 @@ input:focus {
       lastStats: {},
       maxWeights: {},
       isInitialized: false,
-      selectedDay: new Date().getDay()
+      selectedDay: new Date().getDay(),
+      // NEW PROPERTIES
+      recentSets: {},           // {exerciseId: [{weight, reps, logged_at}, ...]} - last 6 sets
+      dashboardMetrics: {},     // {prs: 3, trending: 5, streak: 12}
+      exerciseStats: {},        // {exerciseId: {pr, lastSession, volume30d, chartData, history}}
+      statsLoaded: false        // Flag to prevent redundant loads
     };
 
     // Initialize app
