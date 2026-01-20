@@ -317,6 +317,81 @@ input:focus {
 .trend-arrow.neutral {
   color: var(--gray-700);
 }
+
+/* Mobile responsiveness for Stats screen */
+@media (max-width: 640px) {
+  /* Dashboard metrics: stack vertically on mobile */
+  .dashboard-metrics {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  /* Stats summary: wrap on small screens */
+  .stats-summary {
+    flex-direction: column !important;
+    gap: 8px !important;
+    align-items: flex-start !important;
+  }
+
+  .stats-summary > div {
+    width: 100%;
+  }
+
+  /* Chart container: enable horizontal scroll */
+  .chart-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chart-bars {
+    min-width: max-content;
+  }
+
+  /* Session history: adjust font and spacing */
+  .session-history {
+    font-size: 13px;
+  }
+
+  .session-history-item {
+    padding-left: 8px !important;
+  }
+
+  /* Exercise management: touch-friendly header */
+  .exercise-management-header {
+    min-height: 44px;
+    padding: 16px 20px !important;
+  }
+
+  /* Exercise stat cards: reduce padding on mobile */
+  .stat-section {
+    padding: 16px !important;
+  }
+
+  /* Adjust workout type headers */
+  .workout-type-title {
+    font-size: 18px !important;
+  }
+
+  /* Exercise name in stat cards */
+  .exercise-stat-name {
+    font-size: 16px !important;
+  }
+
+  /* Reduce outer padding on mobile screens */
+  .screen {
+    padding: 16px;
+  }
+
+  /* Ensure metric values are legible */
+  .dashboard-metrics > div > div:first-child {
+    font-size: 24px !important;
+  }
+
+  /* Better wrapping for stats labels */
+  .stats-summary > div > div {
+    white-space: nowrap;
+  }
+}
   </style>
 </head>
 <body>
@@ -1217,7 +1292,7 @@ input:focus {
       // Dashboard section
       const dashboardHTML = `
         <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: center;">
+          <div class="dashboard-metrics" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: center;">
             <div>
               <div style="font-size: 28px; font-weight: 700; color: var(--primary);">${metrics.prs || 0}</div>
               <div style="font-size: 13px; color: var(--gray-700); margin-top: 4px;">New PRs</div>
@@ -1238,6 +1313,7 @@ input:focus {
       const managementHTML = `
         <div style="margin-bottom: 20px;">
           <div
+            class="exercise-management-header"
             onclick="toggleExerciseManagement()"
             style="background: white; padding: 16px 20px; border-radius: 12px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center;"
           >
@@ -1296,8 +1372,8 @@ input:focus {
             const chartWidth = stats.chartData.length * (barWidth + barGap);
 
             chartHTML = `
-              <div style="margin: 16px 0; padding: 12px; background: var(--gray-50); border-radius: 8px; overflow-x: auto;">
-                <div style="display: flex; align-items: flex-end; height: 150px; gap: ${barGap}px; width: ${chartWidth}px;">
+              <div class="chart-container" style="margin: 16px 0; padding: 12px; background: var(--gray-50); border-radius: 8px;">
+                <div class="chart-bars" style="display: flex; align-items: flex-end; height: 150px; gap: ${barGap}px; width: ${chartWidth}px;">
                   ${stats.chartData.map(d => {
                     const height = (d.weight / maxWeight) * 100;
                     return `
@@ -1318,10 +1394,10 @@ input:focus {
           let historyHTML = '';
           if (stats.history.length > 0) {
             historyHTML = `
-              <div style="margin-top: 16px;">
+              <div class="session-history" style="margin-top: 16px;">
                 <h4 style="font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">History (Last 30 Days)</h4>
                 ${stats.history.map(session => `
-                  <div style="margin-bottom: 12px;">
+                  <div class="session-history-item" style="margin-bottom: 12px;">
                     <div style="font-size: 13px; font-weight: 600; color: var(--gray-700); margin-bottom: 4px;">${formatDate(session.date)}</div>
                     <div style="padding-left: 12px; font-size: 13px; color: var(--gray-700);">
                       ${session.sets.map(s => `• ${s.weight}kg × ${s.reps}`).join('<br>')}
@@ -1335,9 +1411,9 @@ input:focus {
           }
 
           return `
-            <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-              <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 12px;">${escapeHtml(ex.name)}</h3>
-              <div style="display: flex; justify-content: space-between; padding: 12px; background: var(--gray-50); border-radius: 8px; font-size: 13px; margin-bottom: 8px;">
+            <div class="stat-section" style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <h3 class="exercise-stat-name" style="font-size: 18px; font-weight: 600; margin-bottom: 12px;">${escapeHtml(ex.name)}</h3>
+              <div class="stats-summary" style="display: flex; justify-content: space-between; padding: 12px; background: var(--gray-50); border-radius: 8px; font-size: 13px; margin-bottom: 8px;">
                 <div>
                   <div style="color: var(--gray-700); margin-bottom: 4px;">All-time PR</div>
                   <div style="font-weight: 700; font-size: 16px;">${prText}</div>
@@ -1359,7 +1435,7 @@ input:focus {
 
         return `
           <div style="margin-bottom: 24px;">
-            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--gray-900);">${escapeHtml(type)}</h3>
+            <h3 class="workout-type-title" style="font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--gray-900);">${escapeHtml(type)}</h3>
             ${exerciseSections}
           </div>
         `;
