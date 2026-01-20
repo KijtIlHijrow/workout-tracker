@@ -923,8 +923,8 @@ input:focus {
     }
 
     function toggleEquipmentChip(equipmentId) {
-      const chip = document.querySelector(`[data-equipment-id="${equipmentId}"]`);
-      if (!chip) return; // Guard against missing elements
+      const chip = document.querySelector(`#equipment-chips .equipment-chip[data-equipment-id="${equipmentId}"]`);
+      if (!chip) return;
 
       if (chip.classList.contains('selected')) {
         chip.classList.remove('selected');
