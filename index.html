@@ -992,7 +992,7 @@ input:focus {
 
                 return `
                   <span class="set-chip">
-                    ${set.weight}kg×${set.reps}${trend ? `<span class="trend-arrow ${arrowClass}">${trend}</span>` : ''}
+                    ${Number(set.weight)}kg×${Number(set.reps)}${trend ? `<span class="trend-arrow ${arrowClass}">${trend}</span>` : ''}
                   </span>
                 `;
               }).join('')}
