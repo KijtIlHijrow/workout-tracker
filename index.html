@@ -441,6 +441,16 @@ input:focus {
     </div>
   </div>
 
+  <div id="confirm-modal" class="modal hidden">
+    <div class="modal-content">
+      <div id="confirm-message" style="margin-bottom: 20px; font-size: 16px; color: var(--gray-900);"></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <button class="btn btn-secondary" id="confirm-cancel">Cancel</button>
+        <button class="btn btn-primary" id="confirm-ok">OK</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modals -->
   <div id="log-set-modal" class="modal hidden" onclick="if(event.target === this) hideModal('log-set-modal')">
     <div class="modal-content">
@@ -531,6 +541,34 @@ input:focus {
 
     function hideModal(modalId) {
       document.getElementById(modalId).classList.add('hidden');
+    }
+
+    // Custom confirm dialog
+    function customConfirm(message) {
+      return new Promise((resolve) => {
+        document.getElementById('confirm-message').textContent = message;
+        showModal('confirm-modal');
+
+        const handleOk = () => {
+          hideModal('confirm-modal');
+          cleanup();
+          resolve(true);
+        };
+
+        const handleCancel = () => {
+          hideModal('confirm-modal');
+          cleanup();
+          resolve(false);
+        };
+
+        const cleanup = () => {
+          document.getElementById('confirm-ok').removeEventListener('click', handleOk);
+          document.getElementById('confirm-cancel').removeEventListener('click', handleCancel);
+        };
+
+        document.getElementById('confirm-ok').addEventListener('click', handleOk);
+        document.getElementById('confirm-cancel').addEventListener('click', handleCancel);
+      });
     }
 
     async function handleAuth() {
@@ -1231,7 +1269,7 @@ input:focus {
     }
 
     async function deleteExercise(exerciseId) {
-      if (!confirm('Delete this exercise? This will also delete all logged sets.')) {
+      if (!await customConfirm('Delete this exercise? This will also delete all logged sets.')) {
         return;
       }
 
@@ -1348,7 +1386,7 @@ input:focus {
     }
 
     async function handleSignOut() {
-      if (!confirm('Sign out?')) return;
+      if (!await customConfirm('Sign out?')) return;
 
       await supabase.auth.signOut();
       state.user = null;
@@ -1427,7 +1465,7 @@ input:focus {
         ? `Remove this equipment? Used by ${usageCount} exercise${usageCount > 1 ? 's' : ''}.`
         : 'Remove this equipment?';
 
-      if (!confirm(confirmMsg)) {
+      if (!await customConfirm(confirmMsg)) {
         return;
       }
 
