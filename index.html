@@ -915,7 +915,8 @@ input:focus {
     async function loadDashboardMetrics() {
       const metrics = { prs: 0, trending: 0, streak: 0 };
 
-      // Metric 1: New PRs this week
+      // Metric 1: New PRs this week (all-time PRs only)
+      // Note: Counts only sets that beat the all-time max, not just weekly improvements
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
 
@@ -988,15 +989,16 @@ input:focus {
       if (allSets && allSets.length > 0) {
         const uniqueDays = [...new Set(allSets.map(s => s.logged_at.split('T')[0]))];
         let streak = 0;
-        let currentDate = new Date();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
         for (let i = 0; i < uniqueDays.length; i++) {
           const logDate = new Date(uniqueDays[i]);
-          const diffDays = Math.floor((currentDate - logDate) / (1000 * 60 * 60 * 24));
+          logDate.setHours(0, 0, 0, 0);
+          const diffDays = Math.floor((today - logDate) / (1000 * 60 * 60 * 24));
 
-          if (diffDays === streak) {
+          if (diffDays === i) {
             streak++;
-            currentDate = logDate;
           } else {
             break;
           }
