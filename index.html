@@ -846,11 +846,17 @@ input:focus {
 
     async function loadRecentSets() {
       // Get last 6 sets per exercise for comparison (current + previous session)
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('sets')
         .select('exercise_id, weight, reps, logged_at')
         .eq('user_id', state.user.id)
-        .order('logged_at', { ascending: false });
+        .order('logged_at', { ascending: false })
+        .limit(200);
+
+      if (error) {
+        console.error('Error loading recent sets:', error);
+        return;
+      }
 
       if (data) {
         const recentSets = {};
