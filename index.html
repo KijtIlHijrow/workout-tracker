@@ -990,7 +990,7 @@ input:focus {
             <span style="transition: transform 0.2s; display: inline-block; transform: rotate(${isExpanded ? '90deg' : '0deg'});" class="collapse-arrow">▶</span>
             ${escapeHtml(type)}
           </h3>
-          <div class="exercise-group-content" style="display: ${isExpanded ? 'block' : 'none'};">`;
+          <div class="exercise-group-content" style="display: ${isExpanded ? 'block' : 'none'};">
           ${exercises.map(ex => {
             const equipmentText = getEquipmentNames(ex.equipment_ids);
             return `
