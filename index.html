@@ -917,6 +917,21 @@ input:focus {
       renderMainScreen();
     }
 
+    function calculateTrend(currentSet, previousSet) {
+      if (!previousSet) return '—'; // No previous session
+
+      const weightUp = currentSet.weight > previousSet.weight;
+      const repsUp = currentSet.reps >= previousSet.reps + 2;
+      const weightDown = currentSet.weight < previousSet.weight;
+
+      if (weightUp || repsUp) {
+        return '↑';
+      } else if (weightDown && !repsUp) {
+        return '↓';
+      }
+      return ''; // Neutral (no arrow)
+    }
+
     function renderMainScreen() {
       const today = new Date().getDay();
       const selectedDay = state.selectedDay;
